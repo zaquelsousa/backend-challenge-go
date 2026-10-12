@@ -83,3 +83,27 @@ func (m Money) Add(other Money) (Money, error){
 
 	return NewMoney(m.Amount+other.Amount, m.Currency)
 }
+
+func (m Money) IsNegative() bool{
+	return m.Amount < 0
+}
+
+func (m Money)Subtract(other Money) (Money, error){
+	if m.Currency != other.Currency {
+		return Money{}, fmt.Errorf("currency mismatch: %s and %s",
+		m.Currency, other.Currency)
+	}
+
+	if other.Amount > 0 && m.Amount < math.MinInt64+other.Amount ||
+	other.Amount < 0 && m.Amount > math.MaxInt64+other.Amount {
+		return Money{}, fmt.Errorf("money subtraction overflow")
+	}
+
+	result := m.Amount - other.Amount
+
+	if result < 0 {
+        return Money{}, fmt.Errorf("insufficient amount")
+    }
+
+	return NewMoney(result, m.Currency)
+}
