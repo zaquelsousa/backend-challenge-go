@@ -88,6 +88,14 @@ func (m Money) IsNegative() bool{
 	return m.Amount < 0
 }
 
+func (m Money) IsTheCurrency() string { 
+	return m.Currency 
+}
+
+func (m Money)IsZero() bool {
+	return  m.Amount == 0 
+}
+
 func (m Money)Subtract(other Money) (Money, error){
 	if m.Currency != other.Currency {
 		return Money{}, fmt.Errorf("currency mismatch: %s and %s",

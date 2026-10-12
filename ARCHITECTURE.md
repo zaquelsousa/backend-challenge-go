@@ -10,12 +10,10 @@ Money é um value object utilizado para representar valores monetários com prec
 
 OutboxEvent e InboxMessage são modelos de suporte à confiabilidade do processamento assíncrono. O outbox permite persistir eventos para publicação após o commit da transação no banco de dados, enquanto o inbox ajuda a evitar o processamento duplicado de mensagens.
 
-![Alt diagrama de dominmio]("/assets/modelagemDeDominio.png)
-
+![Diagrama de domínio](/assets/modelagemDeDominio.png)
 
 ## Fluxo inicial de requisição
 
 Eu tentei mapear o fluxo da request ate o banco de dados, a fim de ter um overview geral da API antes de add camadas como uberFX e SQS que podem dificultar a vizualização do fluxo principal.
 
-
-![Alt diagrama de fluxo HTTP]("/assets/fluxoInicial.png)
+![Diagrama de fluxo HTTP](/assets/fluxoInicial.png)
