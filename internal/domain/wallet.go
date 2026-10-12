@@ -16,7 +16,7 @@ type Wallet struct {
 	updatedAt time.Time
 }
 
-func newWallet(playerID uuid.UUID, currency string, initialBalance Money) (*Wallet, error){
+func NewWallet(playerID uuid.UUID, currency string, initialBalance Money) (*Wallet, error){
 	if initialBalance.IsTheCurrency() != currency {
 		return nil, fmt.Errorf("Currency mismatch")
 	}
@@ -36,6 +36,15 @@ func newWallet(playerID uuid.UUID, currency string, initialBalance Money) (*Wall
 		updatedAt: now,
 	}, nil
 }
+
+//getters
+func (w *Wallet) ID() uuid.UUID { return w.id }
+func (w *Wallet) PlayerID() uuid.UUID { return w.playerID }
+func (w *Wallet) Currency() string { return w.currency }
+func (w *Wallet) Balance() Money { return w.balance }
+func (w *Wallet) Version() int64 { return w.version }
+func (w *Wallet) CreatedAt() time.Time { return w.createdAt }
+
 
 func (w *Wallet) Debit(amount Money)error{
 	if amount.IsNegative() || amount.IsZero() {
