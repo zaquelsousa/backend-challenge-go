@@ -14,7 +14,7 @@ func newTestWallet(t *testing.T, amount int64, currency string) *Wallet {
 		t.Fatalf("NewMoney() error = %v", err)
 	}
 
-	wallet, err := newWallet(uuid.New(), currency, initialBalance)
+	wallet, err := NewWallet(uuid.New(), currency, initialBalance)
 	if err != nil {
 		t.Fatalf("newWallet() error = %v", err)
 	}
@@ -236,7 +236,7 @@ func TestNewWalletRejectsInvalidInitialBalance(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = newWallet(uuid.New(), tt.currency, initialBalance)
+			_, err = NewWallet(uuid.New(), tt.currency, initialBalance)
 			if err == nil {
 				t.Fatal("newWallet() expected an error")
 			}

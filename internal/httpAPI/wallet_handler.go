@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"backend-challange/internal/domain"
+	"backend-challange/internal/postgres"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,8 +35,16 @@ type createWalletResponse struct {
 	Version   int64         `json:"version"`
 }
 
+type WalletHandler struct {
+	store *postgres.WalletStore
+}
+
+func NewWalletHandler(store *postgres.WalletStore) *WalletHandler {
+    return &WalletHandler{store: store}
+}
+
 //handler POST /wallets
-func HandlerWallet(w http.ResponseWriter, r *http.Request){
+func (h *WalletHandler) HandlerCreateWallet(w http.ResponseWriter, r *http.Request){
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
 		http.Error(w, "POST required", http.StatusMethodNotAllowed)
@@ -83,6 +92,11 @@ func HandlerWallet(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	if err := h.store.Create(r.Context(), wallet); err != nil {
+		http.Error(w, "could not persist wallet", http.StatusInternalServerError)
+		return
+	}
+
 	balance := wallet.Balance()
 
 	response := createWalletResponse{
@@ -100,6 +114,27 @@ func HandlerWallet(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusCreated)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		return
+	}
+}
+
+func (h *WalletHandler) HandlerGetWalletById(w http.ResponseWriter, r *http.Request){
+	walletID, err := uuid.Parse(r.PathValue("walletId"))
+	if err != nil {
+		http.Error(w, "invalid wallet id", http.StatusBadRequest)
+		return
+	}
+
+	wallet, err := h.store.GetWallet(r.Context(), walletID)
+	if err != nil {
+		http.Error(w, "wallet not found", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(wallet); err != nil {
 		return
 	}
 }

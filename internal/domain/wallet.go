@@ -44,6 +44,7 @@ func (w *Wallet) Currency() string { return w.currency }
 func (w *Wallet) Balance() Money { return w.balance }
 func (w *Wallet) Version() int64 { return w.version }
 func (w *Wallet) CreatedAt() time.Time { return w.createdAt }
+func (w *Wallet) UpdateAt() time.Time { return w.updatedAt }
 
 
 func (w *Wallet) Debit(amount Money)error{

@@ -2,6 +2,8 @@ package main
 
 import (
 	httpapi "backend-challange/internal/httpAPI"
+	"backend-challange/internal/postgres"
+	"context"
 	"log"
 	"net/http"
 )
@@ -23,10 +25,21 @@ func cors(next http.Handler) http.Handler {
 }
 
 func main(){
-	mux := http.NewServeMux()
-	mux.HandleFunc("/wallets", httpapi.HandlerWallet)
+	ctx := context.Background()
+
+	//conn pool
+	pool, err := postgres.NewPool(ctx)
+	if err != nil {
+        log.Fatal(err)
+    }
+	defer pool.Close()
+
+	store := postgres.NewWalletStore(pool)
+	handler := httpapi.NewWalletHandler(store)
+	server := httpapi.NewServer(handler)
+
 
 	log.Println("Server listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", cors(mux)))
+	log.Fatal(http.ListenAndServe(":8080", server))
 
 }
