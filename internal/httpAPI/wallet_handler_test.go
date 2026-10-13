@@ -1,12 +1,16 @@
-
 package httpapi
 
 import (
+	"backend-challange/internal/postgres"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestHandlerWallet_CreatesWallet(t *testing.T) {
@@ -27,7 +31,19 @@ func TestHandlerWallet_CreatesWallet(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	HandlerWallet(rec, req)
+
+	ctx := context.Background()
+
+	pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	store := postgres.NewWalletStore(pool)
+	handler := NewWalletHandler(store)
+
+handler.HandlerCreateWallet(rec, req)
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf(

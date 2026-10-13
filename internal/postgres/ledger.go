@@ -7,7 +7,6 @@ import (
 	"backend-challange/internal/domain"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -21,7 +20,7 @@ func NewLedgerStore(pool *pgxpool.Pool) *LedgerStore {
 	}
 }
 
-func (s *LedgerStore) Create(ctx context.Context, tx pgx.Tx, entry domain.LedgerEntry) error {
+func (s *LedgerStore) Create(ctx context.Context, entry domain.LedgerEntry) error {
     const query = `
         INSERT INTO wallet_ledger_entries (
             id,
@@ -37,7 +36,7 @@ func (s *LedgerStore) Create(ctx context.Context, tx pgx.Tx, entry domain.Ledger
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `
 
-    _, err := tx.Exec(
+    _, err := s.pool.Exec(
         ctx,
         query,
         entry.ID,

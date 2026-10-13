@@ -27,9 +27,9 @@ type LedgerEntry struct {
 	CreatedAt time.Time
 }
 
-func NewLedgerEntry(id uuid.UUID, walletID uuid.UUID, transactionID uuid.UUID,
-	direction LedgerDirection, money Money, balanceBefore Money, balanceAfter Money, createdAt time.Time)(LedgerEntry, error){
-	if id == uuid.Nil || walletID == uuid.Nil || transactionID == uuid.Nil {
+func NewLedgerEntry(walletID uuid.UUID, transactionID uuid.UUID,
+	direction LedgerDirection, money Money, balanceBefore Money, balanceAfter Money)(LedgerEntry, error){
+	if walletID == uuid.Nil || transactionID == uuid.Nil {
 		return LedgerEntry{}, fmt.Errorf("ledger IDs cannot be empty")
 	}
 
@@ -64,19 +64,15 @@ func NewLedgerEntry(id uuid.UUID, walletID uuid.UUID, transactionID uuid.UUID,
 		return LedgerEntry{}, fmt.Errorf("invalid ledger balance transition")
 	}
 
-	if createdAt.IsZero() {
-		return LedgerEntry{}, fmt.Errorf("ledger creation time cannot be zero")
-	}
-
 		
 	return LedgerEntry{
-		ID:            id,
+		ID:            uuid.New(),
 		WalletID:      walletID,
 		TransactionID: transactionID,
 		Direction:     direction,
 		Money:         money,
 		BalanceBefore: balanceBefore,
 		BalanceAfter:  balanceAfter,
-		CreatedAt:     createdAt,
+		CreatedAt:     time.Now().UTC(),
 	}, nil
 }

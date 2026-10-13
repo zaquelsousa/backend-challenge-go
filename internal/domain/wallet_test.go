@@ -9,16 +9,17 @@ import (
 func newTestWallet(t *testing.T, amount int64, currency string) *Wallet {
 	t.Helper()
 
-	initialBalance, err := NewMoney(amount, currency)
+	money, err := NewMoney(amount, currency)
 	if err != nil {
 		t.Fatalf("NewMoney() error = %v", err)
 	}
 
-	wallet, err := NewWallet(uuid.New(), currency, initialBalance)
+	wallet, err := NewWallet(uuid.New(), currency)
 	if err != nil {
 		t.Fatalf("newWallet() error = %v", err)
 	}
-
+	
+	wallet.balance = money
 	return wallet
 }
 
@@ -30,7 +31,7 @@ func TestWalletDebit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = wallet.Debit(amount)
+	_, err = wallet.Debit(amount, uuid.New())
 	if err != nil {
 		t.Fatalf("Debit() error = %v", err)
 	}
@@ -56,7 +57,7 @@ func TestWalletDebitInsufficientFunds(t *testing.T) {
 	originalVersion := wallet.version
 	originalUpdatedAt := wallet.updatedAt
 
-	err = wallet.Debit(amount)
+	_, err = wallet.Debit(amount, uuid.New())
 	if err == nil {
 		t.Fatal("Debit() expected an error for insufficient funds")
 	}
@@ -84,7 +85,7 @@ func TestWalletCredit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = wallet.Credit(amount)
+	_, err = wallet.Credit(amount, uuid.New())
 	if err != nil {
 		t.Fatalf("Credit() error = %v", err)
 	}
@@ -106,13 +107,15 @@ func TestWalletRejectsCurrencyMismatch(t *testing.T) {
 		{
 			name: "debit",
 			movement: func(w *Wallet, amount Money) error {
-				return w.Debit(amount)
+				_, err := w.Debit(amount, uuid.New())
+				return err
 			},
 		},
 		{
 			name: "credit",
 			movement: func(w *Wallet, amount Money) error {
-				return w.Credit(amount)
+				_, err := w.Credit(amount, uuid.New())
+				return err
 			},
 		},
 	}
@@ -165,13 +168,15 @@ func TestWalletRejectsZeroOrNegativeMovement(t *testing.T) {
 				{
 					name: "debit",
 					movement: func(w *Wallet, amount Money) error {
-						return w.Debit(amount)
+						_, err := w.Debit(amount, uuid.New())
+						return err
 					},
 				},
 				{
 					name: "credit",
 					movement: func(w *Wallet, amount Money) error {
-						return w.Credit(amount)
+						_, err := w.Credit(amount, uuid.New())
+						return err
 					},
 				},
 			} {
@@ -206,40 +211,4 @@ func TestWalletRejectsZeroOrNegativeMovement(t *testing.T) {
 	}
 }
 
-func TestNewWalletRejectsInvalidInitialBalance(t *testing.T) {
-	tests := []struct {
-		name     string
-		currency string
-		amount   int64
-	}{
-		{
-			name:     "currency mismatch",
-			currency: "BRL",
-			amount:   10000,
-		},
-		{
-			name:     "negative balance",
-			currency: "BRL",
-			amount:   -100,
-		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			moneyCurrency := tt.currency
-			if tt.name == "currency mismatch" {
-				moneyCurrency = "USD"
-			}
-
-			initialBalance, err := NewMoney(tt.amount, moneyCurrency)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			_, err = NewWallet(uuid.New(), tt.currency, initialBalance)
-			if err == nil {
-				t.Fatal("newWallet() expected an error")
-			}
-		})
-	}
-}

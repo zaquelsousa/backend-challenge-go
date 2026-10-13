@@ -16,13 +16,9 @@ type Wallet struct {
 	updatedAt time.Time
 }
 
-func NewWallet(playerID uuid.UUID, currency string, initialBalance Money) (*Wallet, error){
-	if initialBalance.IsTheCurrency() != currency {
-		return nil, fmt.Errorf("Currency mismatch")
-	}
-
-	if initialBalance.IsNegative(){
-		return nil, fmt.Errorf("Invalid amount")
+func NewWallet(playerID uuid.UUID, currency string) (*Wallet, error){
+	if len(currency) != 3 {
+		return nil, fmt.Errorf("invalid currency")
 	}
 
 	now := time.Now().UTC()
@@ -30,7 +26,7 @@ func NewWallet(playerID uuid.UUID, currency string, initialBalance Money) (*Wall
 		id:        uuid.New(),
 		playerID:  playerID,
 		currency:  currency,
-		balance:   initialBalance,
+		balance:   Money{Amount: 0, Currency: currency},
 		version:   1,
 		createdAt: now,
 		updatedAt: now,
@@ -47,42 +43,50 @@ func (w *Wallet) CreatedAt() time.Time { return w.createdAt }
 func (w *Wallet) UpdateAt() time.Time { return w.updatedAt }
 
 
-func (w *Wallet) Debit(amount Money)error{
+func (w *Wallet) Debit(amount Money, transactionID uuid.UUID)( LedgerEntry, error){
 	if amount.IsNegative() || amount.IsZero() {
-		return fmt.Errorf("debit amount must be positive")
+		return LedgerEntry{}, fmt.Errorf("debit amount must be positive")
 	}
 
 	if amount.IsTheCurrency() != w.currency {
-		return fmt.Errorf("Currency mismatch")
+		return LedgerEntry{}, fmt.Errorf("Currency mismatch")
 	}
 
 	newBalance, err := w.balance.Subtract(amount)
 	if err != nil {
-		return err
+		return LedgerEntry{}, err
 	}
 
 	if newBalance.IsNegative(){
-		return fmt.Errorf("insufficient funds")
+		return LedgerEntry{}, fmt.Errorf("insufficient funds")
 	}
+	
+	//transctionID jaja eu crio a transacao por hora so para testes locais
+	entry, err := NewLedgerEntry(w.id, transactionID, LedgerDebit, amount, w.balance, newBalance)
 
 	w.commit(newBalance)
-	return nil
+	return entry, nil
 }
-func (w *Wallet) Credit(amount Money)error {
+func (w *Wallet) Credit(amount Money, transactionID uuid.UUID)(LedgerEntry, error) {
 	if amount.IsNegative() || amount.IsZero() {
-		return fmt.Errorf("credit amount must be positive")
+		return LedgerEntry{}, fmt.Errorf("debit amount must be positive")
+
 	}
 	if amount.IsTheCurrency() != w.currency {
-		return fmt.Errorf("currency mismatch")
+		return LedgerEntry{}, fmt.Errorf("Currency mismatch")
+
 	}
 
 	newBalance, err := w.balance.Add(amount)
 	if err != nil {
-		return err
+		return LedgerEntry{}, fmt.Errorf("insufficient funds")
 	}
 
+	//transctionID jaja eu crio a transacao por hora so para testes locais
+	entry, err := NewLedgerEntry(w.id, transactionID, LedgerCredit, amount, w.balance, newBalance)
+
 	w.commit(newBalance)
-	return nil
+	return entry ,nil
 
 }
 

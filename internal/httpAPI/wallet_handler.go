@@ -86,10 +86,24 @@ func (h *WalletHandler) HandlerCreateWallet(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	wallet, err := domain.NewWallet(playerID, currency, inititalBalance)
+	wallet, err := domain.NewWallet(playerID, currency)
 	if err != nil {
 		http.Error(w, "could not create wallet", http.StatusBadRequest)
 		return
+	}
+
+	if inititalBalance.Amount > 0 {
+		//aqui eu deveria criar uma transacao de OPENING mas aida nao tenho isso
+		//voui usar um valor aleatoria como id da transasao apeanas para testes
+		transactionID := uuid.New()
+
+		//por enquando vou descartar o entry object, primeiro preciso criar uma linha de 
+		//transaction do postgree, assim essa operacao com entry vai ficar segura
+		_, err := wallet.Credit(inititalBalance,  transactionID)
+		if err != nil {
+			http.Error(w, "could not persist wallet", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if err := h.store.Create(r.Context(), wallet); err != nil {
